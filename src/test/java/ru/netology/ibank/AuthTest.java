@@ -1,43 +1,61 @@
 package ru.netology.ibank;
 
-import com.google.gson.Gson;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.filter.log.LogDetail;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
-import org.junit.jupiter.api.BeforeAll;
+import com.codeborne.selenide.Condition;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.netology.util.User;
 
-import static io.restassured.RestAssured.given;
-import static ru.netology.util.DataGenerator.generateByNamePasswordStatus;
+import static com.codeborne.selenide.Selectors.byText;
+import static com.codeborne.selenide.Selectors.withText;
+import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.open;
+import static ru.netology.util.DataGenerator.*;
 
 public class AuthTest {
 
-    Gson gson = new Gson();
-    User regData = generateByNamePasswordStatus();
+    private void inputInLoginForm(String login, String pass) {
+        $("[name='login']").setValue(login);
+        $("[name='password']").setValue(pass);
+        $(".button").click();
+    }
 
-    private static RequestSpecification requestSpec = new RequestSpecBuilder()
-        .setBaseUri("http://localhost")
-        .setPort(9999)
-        .setAccept(ContentType.JSON)
-        .setContentType(ContentType.JSON)
-        .log(LogDetail.ALL)
-        .build();
-
-    @BeforeAll
-    static void setUpAll() {
-        given()
-            .spec(requestSpec)
-        .when()
-            .post()
-        .then()
-            .statusCode(200);
+    @BeforeEach
+    void setUp() {
+        open("http://localhost:9999/");
     }
 
     @Test
-    void shouldRequest() {
-        given()
-            .body("test");
+    void shouldLoginByExistentActiveUser() {
+        User user = generateValidUser(true);
+        inputInLoginForm(user.getName(), user.getPassword());
+        $(byText("Личный кабинет")).waitUntil(Condition.visible, 15000);
+    }
+
+    @Test
+    void shouldNotLoginByNonexistentUser() {
+        User user = generateUserInfo(true);
+        inputInLoginForm(user.getName(), user.getPassword());
+        $(withText("Неверно указан логин или пароль")).waitUntil(Condition.visible, 15000);
+    }
+
+    @Test
+    void shouldNotLoginByBlockedUser() {
+        User user = generateValidUser(false);
+        inputInLoginForm(user.getName(), user.getPassword());
+        $(withText("Пользователь заблокирован")).waitUntil(Condition.visible, 15000);
+    }
+
+    @Test
+    void shouldNotLoginByExistentActiveUserIfLoginInvalid() {
+        User user = generateUserWithInvalidLogin(true);
+        inputInLoginForm(user.getName(), user.getPassword());
+        $(withText("Неверно указан логин или пароль")).waitUntil(Condition.visible, 15000);
+    }
+
+    @Test
+    void shouldNotLoginByExistentActiveUserIfPassInvalid() {
+        User user = generateUserWithInvalidPass(true);
+        inputInLoginForm(user.getName(), user.getPassword());
+        $(withText("Неверно указан логин или пароль")).waitUntil(Condition.visible, 15000);
     }
 }

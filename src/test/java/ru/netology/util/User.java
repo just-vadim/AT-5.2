@@ -1,24 +1,18 @@
 package ru.netology.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-
 public class User {
-    Random random = new Random();
-    private final String name;
+    private final String login;
     private final String password;
-    private final List<String> statusList = new ArrayList(Arrays.asList("active", "blocked"));
-    private final String status = statusList.get(random.nextInt(statusList.size()));
+    private final String status;
 
-    public User(String name, String password) {
-        this.name = name;
+    public User(String login, String password, String status) {
+        this.login = login;
         this.password = password;
+        this.status = status;
     }
 
     public String getName() {
-        return name;
+        return login;
     }
 
     public String getPassword() {
